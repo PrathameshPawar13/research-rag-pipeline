@@ -1,26 +1,24 @@
-from fastembed.rerank import Reranker
+import numpy as np
 
-
-_RERANKER: Reranker | None = None
-
-
-def get_reranker(model_name: str = "Xenova/ms-marco-MiniLM-L-6-v2") -> Reranker:
-    global _RERANKER
-    if _RERANKER is None:
-        _RERANKER = Reranker(model_name=model_name)
-    return _RERANKER
+from ingestion.embedder import embed_texts
 
 
 def rerank(query: str, candidates: list[dict], top_k: int = 5) -> list[dict]:
     if not candidates:
         return candidates
 
-    docs = [c["text"] for c in candidates]
-    model = get_reranker()
-    results = list(model.rerank(query, docs))
+    query_emb = np.array(embed_texts([query])[0])
+    texts = [c["text"] for c in candidates]
+    doc_embs = np.array(embed_texts(texts))
 
-    for candidate, result in zip(candidates, results):
-        candidate["rerank_score"] = float(result.score)
+    query_norm = np.linalg.norm(query_emb)
+    doc_norms = np.linalg.norm(doc_embs, axis=1)
+
+    similarities = np.dot(doc_embs, query_emb) / (doc_norms * query_norm + 1e-8)
+
+    for candidate, sim in zip(candidates, similarities):
+        hybrid = candidate.get("score", 0)
+        candidate["rerank_score"] = float((hybrid + sim) / 2)
 
     candidates.sort(key=lambda x: x["rerank_score"], reverse=True)
     return candidates[:top_k]

@@ -22,15 +22,26 @@ def fetch_arxiv_papers(arxiv_ids: list[str]) -> list[dict]:
 
     papers = []
     for entry in root.findall("a:entry", ns):
-        raw_id = entry.find("a:id", ns).text.strip().split("/")[-1] if entry.find("a:id", ns) else ""
+        id_el = entry.find("a:id", ns)
+        raw_id = id_el.text.strip().split("/")[-1] if id_el is not None else ""
+
+        title_el = entry.find("a:title", ns)
+        title = title_el.text.strip().replace("\n", " ") if title_el is not None else ""
+
+        summary_el = entry.find("a:summary", ns)
+        summary = summary_el.text.strip().replace("\n", " ") if summary_el is not None else ""
+
+        published_el = entry.find("a:published", ns)
+        published = published_el.text[:10] if published_el is not None else ""
+
         papers.append({
             "id": _strip_version(raw_id),
-            "title": entry.find("a:title", ns).text.strip().replace("\n", " ") if entry.find("a:title", ns) else "",
-            "summary": entry.find("a:summary", ns).text.strip().replace("\n", " ") if entry.find("a:summary", ns) else "",
+            "title": title,
+            "summary": summary,
             "authors": [
                 author.find("a:name", ns).text for author in entry.findall("a:author", ns)
             ],
-            "published": entry.find("a:published", ns).text[:10] if entry.find("a:published", ns) else "",
+            "published": published,
         })
 
     return papers

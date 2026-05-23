@@ -1,21 +1,21 @@
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 
-_MODEL: SentenceTransformer | None = None
+_EMBEDDER: TextEmbedding | None = None
 
 
-def get_embedding_model(model_name: str = "all-MiniLM-L6-v2") -> SentenceTransformer:
-    global _MODEL
-    if _MODEL is None:
-        _MODEL = SentenceTransformer(model_name)
-    return _MODEL
+def get_embedding_model(model_name: str = "BAAI/bge-small-en-v1.5") -> TextEmbedding:
+    global _EMBEDDER
+    if _EMBEDDER is None:
+        _EMBEDDER = TextEmbedding(model_name=model_name)
+    return _EMBEDDER
 
 
-def embed_text(text: str, model_name: str = "all-MiniLM-L6-v2") -> list[float]:
-    model = get_embedding_model(model_name)
-    return model.encode(text).tolist()
+def embed_text(text: str) -> list[float]:
+    model = get_embedding_model()
+    return list(model.embed(text))[0].tolist()
 
 
-def embed_texts(texts: list[str], model_name: str = "all-MiniLM-L6-v2") -> list[list[float]]:
-    model = get_embedding_model(model_name)
-    return model.encode(texts).tolist()
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    model = get_embedding_model()
+    return [e.tolist() for e in model.embed(texts)]

@@ -1,26 +1,24 @@
-from sentence_transformers import CrossEncoder
+import numpy as np
 
-
-_RERANKER: CrossEncoder | None = None
-
-
-def get_reranker(model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2") -> CrossEncoder:
-    global _RERANKER
-    if _RERANKER is None:
-        _RERANKER = CrossEncoder(model_name)
-    return _RERANKER
+from ingestion.embedder import embed_texts
 
 
 def rerank(query: str, candidates: list[dict], top_k: int = 5) -> list[dict]:
     if not candidates:
         return candidates
 
-    pairs = [(query, c["text"]) for c in candidates]
-    model = get_reranker()
-    scores = model.predict(pairs).tolist()
+    query_emb = np.array(embed_texts([query])[0])
+    texts = [c["text"] for c in candidates]
+    doc_embs = np.array(embed_texts(texts))
 
-    for candidate, score in zip(candidates, scores):
-        candidate["rerank_score"] = float(score)
+    query_norm = np.linalg.norm(query_emb)
+    doc_norms = np.linalg.norm(doc_embs, axis=1)
+
+    similarities = np.dot(doc_embs, query_emb) / (doc_norms * query_norm + 1e-8)
+
+    for candidate, sim in zip(candidates, similarities):
+        hybrid = candidate.get("score", 0)
+        candidate["rerank_score"] = float((hybrid + sim) / 2)
 
     candidates.sort(key=lambda x: x["rerank_score"], reverse=True)
     return candidates[:top_k]

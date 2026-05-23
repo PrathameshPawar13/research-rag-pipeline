@@ -38,11 +38,20 @@ def main():
         )
 
         if st.button("Ingest Papers", type="primary"):
-            ids = [pid.strip() for pid in paper_ids.strip().split("\n") if pid.strip()]
+            raw = paper_ids.strip()
+            ids = [pid.strip() for pid in raw.replace(",", " ").split() if pid.strip()]
             with st.spinner(f"Ingesting {len(ids)} papers..."):
                 try:
-                    ingested = pipeline.ingest(ids)
-                    st.success(f"Ingested {len(ingested)} papers: {', '.join(ingested)}")
+                    result = pipeline.ingest(ids)
+                    ingested = result["ingested_ids"]
+                    errors = result["errors"]
+                    if ingested:
+                        st.success(f"Ingested {len(ingested)} papers: {', '.join(ingested)}")
+                    if errors:
+                        for pid, err in errors.items():
+                            st.warning(f"**{pid}**: {err}")
+                    if not ingested and not errors:
+                        st.info("No papers found for the given IDs.")
                 except Exception as e:
                     st.error(f"Ingestion failed: {e}")
 

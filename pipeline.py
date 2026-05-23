@@ -19,28 +19,37 @@ class RAGPipeline:
         create_collection(self.client, COLLECTION_NAME)
         self._papers: dict[str, dict] = {}
 
-    def ingest(self, arxiv_ids: list[str]) -> list[str]:
+    def ingest(self, arxiv_ids: list[str]) -> dict:
         papers = fetch_arxiv_papers(arxiv_ids)
         all_chunks = []
         ingested_ids = []
+        errors: dict[str, str] = {}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             for paper in papers:
-                pdf_path = download_arxiv_pdf(paper["id"], tmpdir)
-                if not pdf_path:
-                    continue
-                text = extract_text_from_pdf(pdf_path)
-                chunks = chunk_document(text, paper["id"])
-                all_chunks.extend(chunks)
-                ingested_ids.append(paper["id"])
-                self._papers[paper["id"]] = paper
+                pid = paper["id"]
+                try:
+                    pdf_path = download_arxiv_pdf(pid, tmpdir)
+                    if not pdf_path:
+                        errors[pid] = "PDF download failed (arXiv returned non-200)"
+                        continue
+                    text = extract_text_from_pdf(pdf_path)
+                    if not text.strip():
+                        errors[pid] = "PDF extracted no text"
+                        continue
+                    chunks = chunk_document(text, pid)
+                    all_chunks.extend(chunks)
+                    ingested_ids.append(pid)
+                    self._papers[pid] = paper
+                except Exception as e:
+                    errors[pid] = str(e)
 
         if all_chunks:
             texts = [c["text"] for c in all_chunks]
             embeddings = embed_texts(texts)
             upsert_chunks(self.client, COLLECTION_NAME, all_chunks, embeddings)
 
-        return ingested_ids
+        return {"ingested_ids": ingested_ids, "errors": errors}
 
     def query(self, query_text: str, top_k: int = 10) -> dict:
         query_embedding = embed_texts([query_text])[0]

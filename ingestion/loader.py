@@ -6,6 +6,10 @@ from pathlib import Path
 ARXIV_API = "https://export.arxiv.org/api/query"
 
 
+def _strip_version(arxiv_id: str) -> str:
+    return arxiv_id.split("v")[0] if "v" in arxiv_id else arxiv_id
+
+
 def fetch_arxiv_papers(arxiv_ids: list[str]) -> list[dict]:
     id_list = ",".join(arxiv_ids)
     url = f"{ARXIV_API}?id_list={id_list}&max_results={len(arxiv_ids)}"
@@ -18,8 +22,9 @@ def fetch_arxiv_papers(arxiv_ids: list[str]) -> list[dict]:
 
     papers = []
     for entry in root.findall("a:entry", ns):
+        raw_id = entry.find("a:id", ns).text.strip().split("/")[-1] if entry.find("a:id", ns) else ""
         papers.append({
-            "id": entry.find("a:id", ns).text.strip().split("/")[-1] if entry.find("a:id", ns) else "",
+            "id": _strip_version(raw_id),
             "title": entry.find("a:title", ns).text.strip().replace("\n", " ") if entry.find("a:title", ns) else "",
             "summary": entry.find("a:summary", ns).text.strip().replace("\n", " ") if entry.find("a:summary", ns) else "",
             "authors": [
@@ -40,8 +45,9 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 
 def download_arxiv_pdf(arxiv_id: str, output_dir: str) -> str | None:
-    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-    output_path = Path(output_dir) / f"{arxiv_id}.pdf"
+    base_id = _strip_version(arxiv_id)
+    pdf_url = f"https://arxiv.org/pdf/{base_id}.pdf"
+    output_path = Path(output_dir) / f"{base_id}.pdf"
 
     if output_path.exists():
         return str(output_path)

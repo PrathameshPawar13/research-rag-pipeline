@@ -15,10 +15,11 @@ def get_groq_client() -> Groq:
     return _CLIENT
 
 
-def build_context(chunks: list[dict]) -> str:
+def build_context(chunks: list[dict], max_chars: int = 600) -> str:
     parts = []
     for i, chunk in enumerate(chunks, 1):
-        parts.append(f"[{i}] (Source: {chunk['source']}, Relevance: {chunk.get('rerank_score', chunk.get('score', 0)):.3f})\n{chunk['text']}")
+        text = chunk["text"][:max_chars]
+        parts.append(f"[{i}] (Source: {chunk['source']}, Relevance: {chunk.get('rerank_score', chunk.get('score', 0)):.3f})\n{text}")
     return "\n\n".join(parts)
 
 

@@ -60,7 +60,7 @@ class RAGPipeline:
 
         documents = [r["text"] for r in dense_results]
         fused = hybrid_search(query_text, dense_results, documents, alpha=0.5)
-        reranked = rerank(query_text, fused, top_k=5)
+        reranked = rerank(query_text, fused, top_k=3)
         generation = generate_answer(query_text, reranked)
 
         return {

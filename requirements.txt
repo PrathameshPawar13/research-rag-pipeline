@@ -5,10 +5,12 @@ pandas
 pydantic
 pymupdf
 qdrant-client
-fastembed
+sentence-transformers
 groq
 python-multipart
 python-dotenv
+torch
+torchvision
 pytest
 pytest-asyncio
 httpx

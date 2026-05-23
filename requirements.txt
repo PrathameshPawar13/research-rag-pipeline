@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+streamlit
+pandas
+pydantic
+pymupdf
+sentence-transformers
+qdrant-client
+groq
+python-multipart
+python-dotenv
+pytest
+pytest-asyncio
+httpx

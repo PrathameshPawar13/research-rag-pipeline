@@ -1,0 +1,54 @@
+import httpx
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+
+ARXIV_API = "https://export.arxiv.org/api/query"
+
+
+def fetch_arxiv_papers(arxiv_ids: list[str]) -> list[dict]:
+    id_list = ",".join(arxiv_ids)
+    url = f"{ARXIV_API}?id_list={id_list}&max_results={len(arxiv_ids)}"
+
+    response = httpx.get(url, timeout=30)
+    response.raise_for_status()
+
+    root = ET.fromstring(response.text)
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+
+    papers = []
+    for entry in root.findall("a:entry", ns):
+        papers.append({
+            "id": entry.find("a:id", ns).text.strip().split("/")[-1] if entry.find("a:id", ns) else "",
+            "title": entry.find("a:title", ns).text.strip().replace("\n", " ") if entry.find("a:title", ns) else "",
+            "summary": entry.find("a:summary", ns).text.strip().replace("\n", " ") if entry.find("a:summary", ns) else "",
+            "authors": [
+                author.find("a:name", ns).text for author in entry.findall("a:author", ns)
+            ],
+            "published": entry.find("a:published", ns).text[:10] if entry.find("a:published", ns) else "",
+        })
+
+    return papers
+
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    import fitz
+    doc = fitz.open(pdf_path)
+    text = "\n".join(page.get_text() for page in doc)
+    doc.close()
+    return text
+
+
+def download_arxiv_pdf(arxiv_id: str, output_dir: str) -> str | None:
+    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+    output_path = Path(output_dir) / f"{arxiv_id}.pdf"
+
+    if output_path.exists():
+        return str(output_path)
+
+    response = httpx.get(pdf_url, follow_redirects=True, timeout=60)
+    if response.status_code != 200:
+        return None
+
+    output_path.write_bytes(response.content)
+    return str(output_path)

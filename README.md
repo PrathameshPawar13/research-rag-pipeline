@@ -133,7 +133,8 @@ research-rag-pipeline/
 │   └── main.py
 ├── data/               # Sample paper IDs
 ├── tests/              # Pytest test suite
-├── .github/            # CI workflow
+├── pipeline.py     # Standalone RAG pipeline (used by UI)
+├── .github/        # CI workflow
 ├── streamlit_app.py
 ├── Dockerfile
 ├── requirements.txt

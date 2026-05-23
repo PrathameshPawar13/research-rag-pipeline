@@ -53,9 +53,9 @@ def search(
     query_vector: list[float],
     top_k: int = 10,
 ) -> list[dict]:
-    results = client.search(
+    result = client.query_points(
         collection_name=collection_name,
-        query_vector=query_vector,
+        query=query_vector,
         limit=top_k,
     )
     return [
@@ -65,5 +65,5 @@ def search(
             "score": hit.score,
             "chunk_index": hit.payload["chunk_index"],
         }
-        for hit in results
+        for hit in result.points
     ]

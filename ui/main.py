@@ -1,9 +1,11 @@
 import os
 import sys
 
+from dotenv import load_dotenv
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv()
 
 from pipeline import RAGPipeline
 

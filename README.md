@@ -17,7 +17,7 @@ An end-to-end **RAG (Retrieval-Augmented Generation)** pipeline for querying aca
 
 | Metric | Value |
 |--------|-------|
-| Embedding dimension | 384 (all-MiniLM-L6-v2) |
+| Embedding dimension | 384 (bge-small-en-v1.5) |
 | Chunk size | 500 chars with 100 overlap |
 | Hybrid search | Dense (cosine) + Sparse (BM25) fusion |
 | Reranker | cross-encoder/ms-marco-MiniLM-L6-v2 |
@@ -70,8 +70,8 @@ User Query ──> Hybrid Search (Dense + BM25) ──> Cross-Encoder Reranker �
 | **Backend** | FastAPI, Python 3.12, Pydantic |
 | **Frontend** | Streamlit |
 | **Vector DB** | Qdrant (in-memory, no external service) |
-| **Embeddings** | sentence-transformers (all-MiniLM-L6-v2) |
-| **Reranker** | cross-encoder/ms-marco-MiniLM-L6-v2 |
+| **Embeddings** | fastembed (BAAI/bge-small-en-v1.5) |
+| **Reranker** | fastembed (Xenova/ms-marco-MiniLM-L6-v2) |
 | **LLM** | Groq API, Llama 3.1 8B |
 | **PDF Parsing** | PyMuPDF |
 | **Evaluation** | Hit Rate, MRR, Faithfulness |

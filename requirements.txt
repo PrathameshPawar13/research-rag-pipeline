@@ -4,8 +4,8 @@ streamlit
 pandas
 pydantic
 pymupdf
-sentence-transformers
 qdrant-client
+fastembed
 groq
 python-multipart
 python-dotenv
